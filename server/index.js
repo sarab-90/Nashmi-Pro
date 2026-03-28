@@ -6,3 +6,4 @@ import connectDB from "./src/config/db.js";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 
+import  from "./"
