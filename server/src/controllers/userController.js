@@ -8,7 +8,7 @@ import {
 import { asyncHandler } from "../middleware/asyncHandlerMiddleware.js";
 // Get user by ID
 export const getUserByIdController = asyncHandler(async (req, res) => {
-  const userId = req.params.id;
+  const userId = req.params.userid || req.params.id;
   try {
     const user = await getUserByid(userId);
     if (!user) {
@@ -38,7 +38,7 @@ export const getAllUsersController = asyncHandler(async (req, res) => {
   }
 });
 // find user by email
-export const findUserByEmailController = asyncHandler (async (req, res) => {
+export const findUserByEmailController = asyncHandler(async (req, res) => {
   const { email } = req.body;
   try {
     const user = await findUserByEmail(email);
@@ -54,15 +54,11 @@ export const findUserByEmailController = asyncHandler (async (req, res) => {
   }
 });
 // update user by id
-export const updateUserByIdController = asyncHandler (async (req, res) => {
-  const userId = req.params.id;
-  const { username, email, password } = req.body;
+export const updateUserByIdController = asyncHandler(async (req, res) => {
+  const userId = req.params.userid;
+  const { name, email } = req.body;
   try {
-    const updatedUser = await updateUserById(userId, {
-      username,
-      email,
-      password,
-    });
+    const updatedUser = await updateUserById(userId, name, email);
     if (!updatedUser) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -75,18 +71,8 @@ export const updateUserByIdController = asyncHandler (async (req, res) => {
   }
 });
 // delete user by id
-export const deleteUserByIdController = asyncHandler (async (req, res) => {
-  const userId = req.params.id;
-  try {
-    const deletedUser = await deleteUserById(userId);
-    if (!deletedUser) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    return res.status(200).json({ message: "User deleted successfully" });
-  } catch (error) {
-    return res.status(500).json({
-      message: "Error deleting user",
-      error: error.message,
-    });
-  }
+export const deleteUserByIdController = asyncHandler(async (req, res) => {
+  const id = req.params.userid || req.params.id;
+  await deleteUserById(id);
+  return res.status(200).json({ message: "User deleted successfully" });
 });

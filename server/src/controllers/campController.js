@@ -37,7 +37,7 @@ export const updateCampByIdController = asyncHandler(async (req, res) => {
   return res.status(200).json(updatedCamp);
 });
 // Delete camp by ID
-export const deleteCampByIdController = asyncHandler(async (req, res) => {
+export const deleteCampByIdController= asyncHandler(async (req, res) => {
   const deletedCamp = await deleteCampById(req.params.id);
   if (!deletedCamp) {
     return res.status(404).json({ message: "Camp not found" });
