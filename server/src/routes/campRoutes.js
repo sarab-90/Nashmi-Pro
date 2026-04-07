@@ -11,7 +11,7 @@ import {adminOnly} from "../middleware/adminOnlyMiddleware.js";
 
 const router = express.Router();
 
-router.get("/all", protect, getAllCampsController);
+router.get("/all", getAllCampsController);
 
 router.get("/:id", protect, getCampByIdController);
 

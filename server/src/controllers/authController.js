@@ -1,95 +1,122 @@
+import jwt from "jsonwebtoken";
 import { createUser } from "../models/authModel.js";
-import { findUserByEmail, getUserByid } from "../models/userModel.js";
+import {
+  findUserByEmail,
+  getUserByid,
+  saveRefreshToken,
+} from "../models/userModel.js";
 import bcrypt from "bcrypt";
 import { asyncHandler } from "../middleware/asyncHandlerMiddleware.js";
-
+// دالة التسجيل
 export const register = asyncHandler(async (req, res) => {
-  console.log(req.validateData);
   try {
-      const { username, email, password } = req.validateData;
-      console.log("before findUser");
+    const { name, email, password, role } = req.body;
+
     const existedUser = await findUserByEmail(email);
-    console.log("after findUser", existedUser);
     if (existedUser) {
       return res.status(400).json({ message: "Email already exists" });
     }
     const hashedPassword = await bcrypt.hash(password, 10);
-    console.log("hashedPassword", hashedPassword);
-    const newUser = await createUser(username, email, hashedPassword, "{user}");
-    console.log("newUser", newUser);
+    const newUser = await createUser(
+      name,
+      email,
+      hashedPassword,
+      role || "user",
+    );
     if (!newUser) {
       return res.status(400).json({ message: "Failed to create user" });
     }
-    return res
-      .status(201)
-      .json({ message: "User registered successfully", user: newUser });
+    return res.status(201).json({
+      message: "User registered successfully",
+      user: newUser,
+    });
   } catch (error) {
+    console.error("Register Error:", error);
     return res
       .status(500)
-      .json({ message: "interal server error , in register" });
+      .json({ message: "Internal server error in register" });
   }
 });
-// login logic
-export const login = asyncHandler( async (req, res) => {
-  const { email, password } = req.validateData;
+// دالة تسجيل الدخول
+export const login = asyncHandler(async (req, res) => {
   try {
-    if (!email || !password) {
-      return res
-        .status(400)
-        .json({ message: "Email and password are required" });
+    const { email, password } = req.body;
+    const user = await findUserByEmail(email);
+
+    if (!user) {
+      console.log("❌ المستخدم غير موجود");
+      return res.status(400).json({ message: "المستخدم غير مسجل" });
     }
-    const isExistedUser = await findUserByEmail(email);
-    if (!isExistedUser) {
-      return res
-        .status(400)
-        .json({ message: "User not registered, please register first" });
+    const dbPassword = user.hashed_password;
+
+    if (!dbPassword) {
+      console.error(
+        "❌ خطأ: لم يتم العثور على حقل كلمة المرور في بيانات المستخدم!",
+      );
+      return res.status(500).json({ message: "خطأ في بيانات قاعدة البيانات" });
     }
-    const isMatch = await bcrypt.compare(
-      password,
-      isExistedUser.hashed_password,
-    );
+
+    const isMatch = await bcrypt.compare(password, dbPassword);
     if (!isMatch) {
-      return res
-        .status(400)
-        .json({ message: "Email or password is incorrect" });
+      console.log("❌ كلمة المرور خاطئة");
+      return res.status(400).json({ message: "بيانات غير صحيحة" });
     }
-    return res
-      .status(200)
-      .json({
-        message: "Logged in successfully",
-        user: {
-          id: isExistedUser.id,
-          username: isExistedUser.username,
-          email: isExistedUser.email,
-          role: isExistedUser.role,
-        },
-      });
+    if (!process.env.ACCESS_TOKEN_SECRET) {
+      return res.status(500).json({ message: "خطأ في إعدادات السيرفر" });
+    }
+
+    const accessToken = jwt.sign(
+      { id: user.userid, role: user.role },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: "15m" },
+    );
+    res.cookie("token", accessToken, {
+      httpOnly: true,
+      secure: "false",
+      sameSite: "lax",
+      maxAge: 15 * 60 * 1000, // 15 دقيقة
+    }); 
+    return res.status(200).json({
+      message: "تم تسجيل الدخول بنجاح",
+      user: { id: user.userid, name: user.name, email: user.email, role: user.role },
+    });
   } catch (error) {
-    return res.status(500).json({ message: "interal server error , in login" });
+    return res.status(500).json({ message: "خطأ داخلي", error: error.message });
   }
 });
-// logout logic
-export const logout = asyncHandler(async (req, res) => {
-  const token = req.cookies.refreshToken;
+// دالة تسجيل الخروج
+export const logout = (req, res) => {
   try {
-    if (!token) {
-      return res.status(400).json({ message: "No token provided" });
-    }
-    const decoded = verifyRefreshToken(token);
-    await saveteRefreshToken(decoded.userId, null);
-    res.clearCookie("ACCESS_TOKEN_SECRET");
-    res.clearCookie("REFRESH_TOKEN_SECRET");
-    return res.status(200).json({ message: "Logged out successfully" });
+    res.clearCookie("token");
+    res.clearCookie("refreshToken");
+    return res.status(200).json({
+      success: true,
+      message: "Logged out successfully",
+    });
   } catch (error) {
-    return res.status(500).json({ message: "interal server error , in logout" });
+    return res.status(200).json({ message: "Logged out" });
   }
-});
-// current user
-export const currentUser = asyncHandler(async(req, res) => {
-  const userId = req.user.id;
-  
-  const me = await getUserByid(userId);
-  if (!me)
-    return res.status(404).json({message: "User Not Found"})
-  res.status(200).json({message: "User Fetched succssfuly", me})
-})
+};
+// المستخدم الحالي
+export const currentUser = async (req, res) => {
+  try {
+    if (!req.user || !req.user.userid) {
+      return res.status(200).json({
+        success: true,
+        user: null,
+        message: "No active session",
+      });
+    }
+    const user = await getUserByid(req.user.userid)
+    if (!user) {
+      return res.status(200).json({ success: true, user: null });
+    }
+    res.status(200).json({ success: true, user });
+  } catch (error) {
+    console.error("Error in getCurrentUser:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};

@@ -1,15 +1,14 @@
-import pool from "../config/db.js";
-
-//  الطريقة 1 >>استعلام لإنشاء مستخدم جديد في قاعدة البيانات
-export const createUser = async (username, email, hashed_password, role) => {
-  const query = `INSERT INTO users (username, email, hashed_password, role) 
-                    VALUES ($1, $2, $3, $4) RETURNING id, username, email, role`;
-
+import { pool } from "../config/db.js";
+// لإنشاء مستخدم جديد في قاعدة البيانات
+export const createUser = async (name, email, hashed_password, role) => {
+  const query = `INSERT INTO users (name, email, hashed_password, role) 
+                 VALUES ($1, $2, $3, $4) 
+                 RETURNING userid, name, email, role`;
   const result = await pool.query(query, [
-    username,
-    email,
+    name,            
+    email,         
     hashed_password,
-    role,
+    role            
   ]);
-  return result.rows[0]; // اخر سطر في النتيجة
+  return result.rows[0]; // يعيد الكائن الجديد المنشأ
 };

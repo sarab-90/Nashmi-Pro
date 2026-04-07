@@ -2,17 +2,17 @@ import {register, login, logout, currentUser } from "../controllers/authControll
 import {protect} from "../middleware/protectMiddleware.js"
 import {authRateLimitMiddleware} from "../middleware/authRateLimitMiddleware.js"
 import {validate} from "../middleware/validateMiddleware.js"
-
+import {registerSchema, loginSchema} from "../validation/userValidation.js"
 import express from 'express';
 
 const router = express.Router();
 
-router.post('/register', validate, authRateLimitMiddleware, register);
+router.post('/register', validate(registerSchema), authRateLimitMiddleware, register);
 
-router.post('/login', validate, authRateLimitMiddleware, login);
+router.post('/login', validate(loginSchema), authRateLimitMiddleware, login);
 
-router.post('/logout', protect, logout);
+router.post('/logout',  logout);
 
-router.post('/currentUser', protect, currentUser);
+router.get('/currentUser', currentUser);
 
 export default router;

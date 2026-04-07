@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "Nashmi-Pro",
+			"path": "../.."
+		},
+		{
+			"name": "clients",
+			"path": ".."
+		}
+	],
+	"settings": {}
+}

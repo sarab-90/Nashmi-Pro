@@ -11,14 +11,14 @@ import {
 
 const router = express.Router();
 
-router.get("/:id", protect, getUserByIdController);
-
 router.get("/all", protect, adminOnly, getAllUsersController);
 
-router.put("/update/:id", protect, adminOnly, updateUserByIdController);
+router.get("/:userid", protect, getUserByIdController);
 
-router.post("/emil", protect, findUserByEmailController);
+router.put("/update/:userid", protect, adminOnly, updateUserByIdController);
 
-router.delete("/delete/:id", protect, adminOnly, deleteUserByIdController);
+router.post("/email", protect, findUserByEmailController);
+
+router.delete("/delete/:userid", protect, adminOnly, deleteUserByIdController);
 
 export default router;

@@ -1,26 +1,19 @@
 import { pool } from "../config/db.js";
-
-//  الطريقة 2 >>  get user by id
+// get user by id
 export const getUserByid = async (id) => {
   const result = await pool.query(
-    `SELECT username, email, hashed_password, role FROM users WHERE id= $1`,
-    [id],
+    `SELECT userid, name, email, hashed_password, role FROM users WHERE userid = $1`, 
+    [id]
   );
-  return result.rows[0]; // اخر سطر في النتيجة
+  return result.rows[0];
 };
-////
+// get user by email
 export const findUserByEmail = async (email) => {
-  console.log("12email:", email);
-
   try {
     const result = await pool.query(
-      ` SELECT column_name FROM information_schema.columns WHERE table_name = 'users'`,
-      // `SELECT id, username, email, hashed_password, role FROM users WHERE email = $1`,
-      [email],
+      `SELECT * FROM users WHERE email = $1`, 
+      [email]
     );
-    (console.log("query:", query), console.log("555email:", email));
-    console.log("result:", result.rows);
-
     return result.rows[0];
   } catch (error) {
     console.log("FIND USER ERROR:", error);
@@ -30,25 +23,25 @@ export const findUserByEmail = async (email) => {
 // get all users
 export const getAllUsers = async () => {
   const result = await pool.query(
-    `SELECT id, username, email, role FROM users`,
+    `SELECT userid, name, email, role FROM users`,
   );
-  return result.rows; // كل السطور في النتيجة
+  return result.rows;
 };
 // update user by id
-export const updateUserById = async (id, username, email) => {
+export const updateUserById = async (id, name, email) => {
   const result = await pool.query(
-    `UPDATE users SET username = $1, email = $2 WHERE id = $3 RETURNING id, username, email`,
-    [username, email, id],
+    `UPDATE users SET name = $1, email = $2 WHERE userid = $3 RETURNING userid, name, email`,
+    [name, email, id],
   );
-  return result.rows[0]; // اخر سطر في النتيجة
+  return result.rows[0];
 };
 // delete user by id
 export const deleteUserById = async (id) => {
-  await pool.query(`DELETE FROM users WHERE id = $1`, [id]);
+  await pool.query(`DELETE FROM users WHERE userid = $1`, [id]);
 };
 // save refresh token
 export const saveRefreshToken = async (userId, refreshToken) => {
-  await pool.query(`UPDATE users SET refresh_token = $1 WHERE id = $2`, [
+  await pool.query(`UPDATE users SET refresh_token = $1 WHERE userid = $2`, [
     refreshToken,
     userId,
   ]);
