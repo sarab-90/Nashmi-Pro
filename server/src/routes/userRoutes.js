@@ -3,10 +3,11 @@ import {protect} from "../middleware/protectMiddleware.js";
 import {adminOnly} from "../middleware/adminOnlyMiddleware.js"
 import {
     getUserByIdController,
-    getAllUsersController,
     findUserByEmailController,
+    getAllUsersController,
     updateUserByIdController,
-    deleteUserByIdController
+    deleteUserByIdController,
+    changePasswordController
 } from "../controllers/userController.js";
 
 const router = express.Router();
@@ -20,5 +21,7 @@ router.put("/update/:userid", protect, adminOnly, updateUserByIdController);
 router.post("/email", protect, findUserByEmailController);
 
 router.delete("/delete/:userid", protect, adminOnly, deleteUserByIdController);
+
+router.put("/change-password", protect, changePasswordController);
 
 export default router;
